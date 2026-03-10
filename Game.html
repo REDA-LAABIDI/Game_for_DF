@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For My Love, Douaa Farmati</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background: #fff0f3;
+            cursor: none; /* Hide cursor to use the basket instead */
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #ffccd5, #ffb3c1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #ui {
+            margin-top: 30px;
+            text-align: center;
+            color: #c9184a;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        h1 { font-size: 2.5rem; margin-bottom: 5px; text-shadow: 2px 2px white; }
+        
+        #message-display {
+            font-size: 1.4rem;
+            font-style: italic;
+            height: 40px;
+            color: #a4133c;
+            transition: all 0.3s;
+        }
+
+        #basket {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            font-size: 60px;
+            transform: translateX(-50%);
+            pointer-events: none;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 35px;
+            user-select: none;
+            animation: sway 2s infinite ease-in-out;
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(15px); }
+        }
+
+        /* Modal / Apology Popup */
+        #modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 50px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 0 30px #ff4d6d;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h2 { color: #ff4d6d; font-size: 2rem; }
+        .modal-content p { font-size: 1.2rem; line-height: 1.6; color: #555; }
+
+        #forgive-btn {
+            background: #ff4d6d;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        #forgive-btn:hover { transform: scale(1.1); background: #ff758f; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="ui">
+            <h1>Douaa Farmati</h1>
+            <p>Catch the hearts to see my message...</p>
+            <div id="score-board">Love Collected: <span id="score">0</span>/15</div>
+            <div id="message-display">I'm waiting for you...</div>
+        </div>
+
+        <div id="basket">🧺</div>
+
+        <div id="modal">
+            <div class="modal-content">
+                <h2>I'm So Sorry, Douaa</h2>
+                <p>My days are gray without you. I hate that I hurt you. You are the most important person in my life. Please forgive me? ❤️</p>
+                <button id="forgive-btn" onclick="acceptApology()">I Forgive You ✨</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('game-container');
+        const basket = document.getElementById('basket');
+        const scoreElement = document.getElementById('score');
+        const messageDisplay = document.getElementById('message-display');
+        const modal = document.getElementById('modal');
+
+        let score = 0;
+        let gameActive = true;
+
+        const dynamicMessages = [
+            "Every heart is a reason I love you...",
+            "I'm really sorry for everything.",
+            "You are my queen, Douaa.",
+            "Can we make it right?",
+            "Almost there, my love..."
+        ];
+
+        // Move basket with mouse
+        document.addEventListener('mousemove', (e) => {
+            if (!gameActive) return;
+            basket.style.left = e.clientX + 'px';
+        });
+
+        // Touch support for mobile
+        document.addEventListener('touchmove', (e) => {
+            if (!gameActive) return;
+            let touch = e.touches[0];
+            basket.style.left = touch.clientX + 'px';
+        });
+
+        function createHeart() {
+            if (!gameActive) return;
+
+            const heart = document.createElement('div');
+            heart.innerHTML = '💖';
+            heart.classList.add('heart');
+            heart.style.left = Math.random() * 90 + 'vw';
+            heart.style.top = '-50px';
+            container.appendChild(heart);
+
+            let fallSpeed = 3 + Math.random() * 3;
+            let fallInterval = setInterval(() => {
+                if (!gameActive) {
+                    heart.remove();
+                    clearInterval(fallInterval);
+                    return;
+                }
+
+                let top = parseFloat(heart.style.top);
+                heart.style.top = (top + fallSpeed) + 'px';
+
+                const basketRect = basket.getBoundingClientRect();
+                const heartRect = heart.getBoundingClientRect();
+
+                // Collision Logic
+                if (
+                    heartRect.bottom >= basketRect.top &&
+                    heartRect.right >= basketRect.left &&
+                    heartRect.left <= basketRect.right &&
+                    heartRect.top <= basketRect.bottom
+                ) {
+                    score++;
+                    scoreElement.innerText = score;
+                    
+                    // Change message every 3 points
+                    if (score % 3 === 0) {
+                        messageDisplay.innerText = dynamicMessages[Math.floor(score/3) - 1] || "I love you!";
+                    }
+
+                    heart.remove();
+                    clearInterval(fallInterval);
+                    
+                    if (score >= 15) {
+                        endGame();
+                    }
+                }
+
+                if (top > window.innerHeight) {
+                    heart.remove();
+                    clearInterval(fallInterval);
+                }
+            }, 20);
+        }
+
+        function endGame() {
+            gameActive = false;
+            modal.style.display = 'flex';
+            document.body.style.cursor = 'default';
+        }
+
+        function acceptApology() {
+            alert("Thank you, Douaa! You've made me the happiest person again. ❤️");
+            location.reload();
+        }
+
+        // Start creating hearts
+        setInterval(createHeart, 800);
+    </script>
+</body>
+</html>
